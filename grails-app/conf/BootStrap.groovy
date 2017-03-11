@@ -56,16 +56,22 @@ class BootStrap {
       new Requestmap(url: '/dbconsole/**', configAttribute: 'ROLE_ADMIN').save()
       new Requestmap(url: '/console/**', configAttribute: 'ROLE_ADMIN').save()
 
-      //Role database init
-      if(Role.count == 0){
-        new Role(authority:"ROLE_ADMIN").save()
-        new Role(authority:"ROLE_PLAYER").save()
-      }
+      //Role & User database init
+      if(Role.count == 0 && User.count == 0){
+        def roleAdmin = new Role(authority:"ROLE_ADMIN").save()
+        def rolePlayer = new Role(authority:"ROLE_PLAYER").save()
+        
+        //create user admin
+        def userAdmin = new User(username:"admin", password: "admin", enabled: true).save()
+        UserRole.create userAdmin, roleAdmin, true
 
-      //User database init
-      if(User.count == 0){
-        new User(username:"admin", password: "admin", enabled: true).save()
-        UserRole.create User.findByUsername('admin'), Role.findByAuthority("ROLE_ADMIN"), true
+        //create N test user players
+        def user
+        1.upto(30, {
+            user = new User(username:"test-user-${it}", password: "league", enabled: true).save()
+            UserRole.create user, rolePlayer, true
+        })
+
       }
         
       //League database init
