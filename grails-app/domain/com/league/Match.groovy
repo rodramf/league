@@ -1,5 +1,7 @@
 package com.league
 
+import com.security.User
+
 class Match {
     Date dateMatch
     String placeDirection
@@ -7,11 +9,13 @@ class Match {
     Date endTime
     Integer numberOfTeamPlayers
     MatchStatus status
+    Team teamA
+    Team teamB
     Date dateCreated
     Date lastUpdated
 
     static hasMany = [
-      players: PlayerMatch
+      enrolledPlayers: User
     ]
 
     static constraints = {

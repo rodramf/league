@@ -1,5 +1,7 @@
 package com.league
 
+import com.security.User
+
 class League {
     String name
     String sortDescription
@@ -13,7 +15,7 @@ class League {
     Date lastUpdated
 
     static hasMany = [
-      players: Player,
+      users: User,
       matchs: Match
     ]
 
