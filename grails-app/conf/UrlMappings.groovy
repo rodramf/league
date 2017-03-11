@@ -11,5 +11,7 @@ class UrlMappings {
         "500"(view:'/error')
 
         "/api/leagues" (resources:"League")
+        "/api/users" (resources:"User")
+        "/api/me" (resource:"User"){ scope = "me" }
 	}
 }

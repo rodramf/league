@@ -1,104 +1,39 @@
 package com.security
 
+import grails.converters.JSON
+import grails.rest.RestfulController
 
+class UserController extends RestfulController<User>{
+    def springSecurityService
 
-import static org.springframework.http.HttpStatus.*
-import grails.transaction.Transactional
+    static responseFormats = ['json', 'xml']
 
-@Transactional(readOnly = true)
-class UserController {
+    UserController(){
+        super(User)
+    }
 
-    static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
-
-    def index(Integer max) {
+    @Override
+    def index(final Integer max) {
         params.max = Math.min(max ?: 10, 100)
-        respond User.list(params), model:[userInstanceCount: User.count()]
-    }
-
-    def show(User userInstance) {
-        respond userInstance
-    }
-
-    def create() {
-        respond new User(params)
-    }
-
-    @Transactional
-    def save(User userInstance) {
-        if (userInstance == null) {
-            notFound()
-            return
+        def instanceList = listAllResources(params)
+        if(instanceList.totalCount == 0){
+            respond (["data":[]])
         }
+        respond instanceList, [metadata: [total: instanceList.totalCount, psize: params.max, offset: params.offset?:0]]
+    }
 
-        if (userInstance.hasErrors()) {
-            respond userInstance.errors, view:'create'
-            return
-        }
+    @Override
+    def show() {
+        //JSON.use("details")
 
-        userInstance.save flush:true
-
-        request.withFormat {
-            form multipartForm {
-                flash.message = message(code: 'default.created.message', args: [message(code: 'user.label', default: 'User'), userInstance.id])
-                redirect userInstance
+        if(params.scope == "me"){
+            if(!springSecurityService.currentUser){
+                respond (["data":[]])
             }
-            '*' { respond userInstance, [status: CREATED] }
+            def user = springSecurityService.currentUser
+            params.id = user?.id
         }
+        respond queryForResource(params.id)
     }
 
-    def edit(User userInstance) {
-        respond userInstance
-    }
-
-    @Transactional
-    def update(User userInstance) {
-        if (userInstance == null) {
-            notFound()
-            return
-        }
-
-        if (userInstance.hasErrors()) {
-            respond userInstance.errors, view:'edit'
-            return
-        }
-
-        userInstance.save flush:true
-
-        request.withFormat {
-            form multipartForm {
-                flash.message = message(code: 'default.updated.message', args: [message(code: 'User.label', default: 'User'), userInstance.id])
-                redirect userInstance
-            }
-            '*'{ respond userInstance, [status: OK] }
-        }
-    }
-
-    @Transactional
-    def delete(User userInstance) {
-
-        if (userInstance == null) {
-            notFound()
-            return
-        }
-
-        userInstance.delete flush:true
-
-        request.withFormat {
-            form multipartForm {
-                flash.message = message(code: 'default.deleted.message', args: [message(code: 'User.label', default: 'User'), userInstance.id])
-                redirect action:"index", method:"GET"
-            }
-            '*'{ render status: NO_CONTENT }
-        }
-    }
-
-    protected void notFound() {
-        request.withFormat {
-            form multipartForm {
-                flash.message = message(code: 'default.not.found.message', args: [message(code: 'user.label', default: 'User'), params.id])
-                redirect action: "index", method: "GET"
-            }
-            '*'{ render status: NOT_FOUND }
-        }
-    }
 }
